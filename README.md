@@ -2,7 +2,7 @@
 
 A responsive weather app that shows current conditions, an hourly outlook, and a 5-day forecast for any city — with a bear mascot that changes outfit based on the live weather and temperature. Built as Task 3 of the AVIP 2026 Web Development track by B.Y.T.E x Arithmatrix.
 
-🔗 **Live demo:** [add your deployed link here]
+🔗 **Live demo:** (https://wd2weatherappbyte.vercel.app)
 📂 **Repo:** (https://github.com/HiepNgan/WD_2_WeatherApp_byte)
 
 ---
