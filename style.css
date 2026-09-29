@@ -1,0 +1,459 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Arial, sans-serif;
+  background: #dbeafe;
+  padding: 20px;
+  transition: background 0.6s ease;
+}
+
+/* ===== Nền đổi theo tình trạng thời tiết ===== */
+body.weather-clear { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+body.weather-clouds { background: linear-gradient(135deg, #94a3b8, #64748b); }
+body.weather-rain { background: linear-gradient(135deg, #64748b, #334155); }
+body.weather-thunderstorm { background: linear-gradient(135deg, #475569, #1e293b); }
+body.weather-snow { background: linear-gradient(135deg, #e2e8f0, #94a3b8); }
+body.weather-mist { background: linear-gradient(135deg, #cbd5e1, #94a3b8); }
+
+/* ===== Card chính — chiếm 70% chiều rộng màn hình ===== */
+.card {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.15s ease-out;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 36px;
+  width: 70vw;
+  max-width: 1100px;
+  min-width: 320px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 40px;
+}
+
+/* Cho phép 2 cột co lại được, nếu không ô tìm kiếm sẽ tràn ra ngoài thẻ trên mobile */
+.left-panel,
+.right-panel {
+  min-width: 0;
+}
+
+.left-panel h1 {
+  margin: 0 0 20px;
+  font-size: 1.4rem;
+  color: #1e293b;
+}
+
+/* ===== Form tìm kiếm ===== */
+#search-form {
+  display: flex;
+  gap: 8px;
+}
+
+#city-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+#city-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+#search-form button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #3b82f6;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#search-form button:hover {
+  background: #2563eb;
+}
+
+#location-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+#location-btn:hover {
+  background: #e2e8f0;
+}
+
+#error-message {
+  margin-top: 16px;
+  color: #dc2626;
+  font-size: 0.9rem;
+}
+
+/* ===== Gấu dự báo ===== */
+.bear-wrap {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.bear {
+  width: 100%;
+  max-width: 300px;
+}
+
+.accessory {
+  display: none;
+}
+
+.accessory.active {
+  display: block;
+}
+
+.bear.eyes-hidden .bear-eye {
+  display: none;
+}
+
+/* ===== Viền đen kiểu sticker — CHỈ áp dụng cho phụ kiện, không áp cho thân gấu ===== */
+/* (viền trên thân/tay sẽ làm lộ đường nối giữa các khối hình chồng lên nhau) */
+.bear .accessory circle,
+.bear .accessory ellipse,
+.bear .accessory rect,
+.bear .accessory path {
+  stroke: #3b2a1a;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* Hiệu ứng động (mưa nhỏ giọt, hơi thở, bướm...) — mặc định ẩn, JS sẽ bật đúng cái cần */
+.bear .fx {
+  display: none;
+}
+
+.bear .fx.active {
+  display: block;
+}
+
+/* Đường may / nếp gấp mảnh trên quần áo */
+.bear .accessory .seam {
+  stroke-width: 2;
+  opacity: 0.5;
+}
+
+/* Vệt sáng nhỏ cho quần áo có chiều sâu */
+.bear .accessory .hl {
+  stroke: #ffffff;
+  stroke-width: 3;
+  opacity: 0.4;
+}
+
+/* Gấu trốn vào nhà khi có bão: ẩn cả thân gấu, chỉ còn ngôi nhà */
+.bear:has(.acc-house.active) .bear-base {
+  display: none;
+}
+
+/* Mắt/mũi nhỏ trong cửa sổ — không viền cho khỏi bị dính */
+.bear .accessory .no-stroke {
+  stroke: none;
+}
+
+/* Trời lạnh: gấu run cầm cập */
+.bear.shiver {
+  animation: shiver 0.25s linear infinite;
+}
+
+@keyframes shiver {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-1.5px); }
+  75% { transform: translateX(1.5px); }
+}
+
+/* ===== Cột phải: kết quả thời tiết ===== */
+#city-name {
+  font-size: 1.6rem;
+  font-weight: bold;
+  margin: 0;
+  color: #1e293b;
+}
+
+#local-time {
+  font-size: 0.95rem;
+  color: #334155;
+  font-weight: bold;
+  margin: 4px 0 0;
+}
+
+.current-weather {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+#weather-icon {
+  width: 90px;
+  height: 90px;
+}
+
+#temperature {
+  font-size: 2.4rem;
+  font-weight: bold;
+  margin: 0;
+  color: #1e293b;
+}
+
+#condition {
+  font-size: 1rem;
+  color: #475569;
+  margin: 2px 0;
+  text-transform: capitalize;
+}
+
+#humidity {
+  font-size: 0.95rem;
+  color: #475569;
+  margin: 0;
+}
+
+#last-updated {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin: 10px 0 0;
+}
+
+.est-note {
+  font-weight: normal;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-left: 4px;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #1e293b;
+  margin: 28px 0 10px;
+}
+
+/* ===== Dự báo theo mốc 3 tiếng trong 24h tới ===== */
+.hourly-grid {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.hour-card {
+  flex: 0 0 auto;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #475569;
+  min-width: 56px;
+}
+
+.hour-card img {
+  width: 36px;
+  height: 36px;
+}
+
+.hour-card p {
+  margin: 2px 0;
+}
+
+/* ===== Dự báo 5 ngày ===== */
+.forecast-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.forecast-day {
+  flex: 1;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.forecast-day img {
+  width: 40px;
+  height: 40px;
+}
+
+.forecast-day p {
+  margin: 2px 0;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 800px) {
+  .card { width: 92vw; padding: 24px; }
+  .layout { grid-template-columns: 1fr; gap: 24px; }
+  .bear { max-width: 190px; }
+}
+
+/* ================================
+   HIỆU ỨNG NỀN THEO THỜI TIẾT
+   ================================ */
+
+.weather-fx {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.rain-drop {
+  position: absolute;
+  top: -10%;
+  width: 2px;
+  height: 60px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.65));
+  animation-name: fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes fall {
+  to { transform: translateY(110vh); }
+}
+
+.snowflake {
+  position: absolute;
+  top: -5%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  animation-name: snow-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes snow-fall {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(15px, 55vh); }
+  100% { transform: translate(-10px, 110vh); }
+}
+
+.sun-glow {
+  position: absolute;
+  top: 8%;
+  right: 10%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 70%);
+  animation: sun-pulse 3s ease-in-out infinite;
+}
+
+@keyframes sun-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+.cloud-shape {
+  position: absolute;
+  width: 200px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  filter: blur(6px);
+  animation-name: drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes drift {
+  from { transform: translateX(-250px); }
+  to { transform: translateX(110vw); }
+}
+
+.mist-layer {
+  position: absolute;
+  left: -20%;
+  width: 140%;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.25);
+  filter: blur(8px);
+  animation-name: mist-drift;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+@keyframes mist-drift {
+  from { transform: translateX(-10%); }
+  to { transform: translateX(10%); }
+}
+
+.lightning-flash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+  animation: flash 6s ease-in-out infinite;
+}
+
+@keyframes flash {
+  0%, 96%, 100% { opacity: 0; }
+  97% { opacity: 0.5; }
+  98% { opacity: 0; }
+  99% { opacity: 0.3; }
+}
+
+.night-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.night-overlay.active {
+  opacity: 1;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: #ffffff;
+  border-radius: 50%;
+  animation-name: twinkle;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
+
+#feels-like {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0 0 4px;
+}

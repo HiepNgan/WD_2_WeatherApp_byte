@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Nơi JS sẽ tạo hiệu ứng mưa/tuyết/mây... theo đúng thời tiết -->
+  <div class="weather-fx" id="weather-fx"></div>
+
+  <!-- Lớp phủ tối khi đang là ban đêm ở thành phố đó -->
+  <div class="night-overlay" id="night-overlay"></div>
+
+  <main class="card">
+    <div class="layout">
+
+      <!-- ===== CỘT TRÁI: tìm kiếm + gấu dự báo ===== -->
+      <div class="left-panel">
+        <h1>Weather App</h1>
+
+        <form id="search-form">
+          <input
+            type="text"
+            id="city-input"
+            placeholder="Enter a city name..."
+            autocomplete="off"
+          />
+          <button type="submit">Search</button>
+        </form>
+
+        <button type="button" id="location-btn">📍 Use my location</button>
+
+        <p id="error-message" hidden></p>
+
+        <!-- Gấu dự báo — trang phục đổi theo thời tiết -->
+        <div class="bear-wrap">
+          <svg viewBox="-50 -30 315 295" class="bear" id="bear">
+            <defs>
+              <filter id="softblur" x="-30%" y="-100%" width="160%" height="300%">
+                <feGaussianBlur stdDeviation="3" />
+              </filter>
+            </defs>
+
+            <!-- ===== Hiệu ứng nằm SAU gấu: vũng nước khi mưa ===== -->
+            <g class="fx fx-puddle">
+              <ellipse cx="100" cy="257" rx="84" ry="8" fill="#60a5fa" opacity="0.5" />
+              <ellipse cx="66" cy="257" rx="6" ry="2" fill="none" stroke="#ffffff" stroke-width="1.5">
+                <animate attributeName="rx" values="6;32" dur="1.6s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.9;0" dur="1.6s" repeatCount="indefinite" />
+              </ellipse>
+              <ellipse cx="138" cy="258" rx="6" ry="2" fill="none" stroke="#ffffff" stroke-width="1.5">
+                <animate attributeName="rx" values="6;32" dur="1.6s" begin="0.8s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.9;0" dur="1.6s" begin="0.8s" repeatCount="indefinite" />
+              </ellipse>
+            </g>
+
+            <!-- ===== Thân gấu (bị ẩn khi gấu trốn vào nhà) ===== -->
+            <g class="bear-base">
+              <!-- Tai -->
+              <circle cx="55" cy="55" r="22" fill="#a9744f" />
+              <circle cx="145" cy="55" r="22" fill="#a9744f" />
+              <circle cx="55" cy="55" r="11" fill="#7a5236" />
+              <circle cx="145" cy="55" r="11" fill="#7a5236" />
+
+              <!-- Tay trái -->
+              <rect x="22" y="148" width="30" height="72" rx="15" fill="#c78f5f" />
+              <circle cx="37" cy="214" r="15" fill="#c78f5f" />
+
+              <!-- Tay phải -->
+              <rect x="148" y="148" width="30" height="72" rx="15" fill="#c78f5f" />
+              <circle cx="163" cy="214" r="15" fill="#c78f5f" />
+
+              <!-- Đế dép xỏ ngón (nằm SAU chân để chân đặt lên đế) -->
+    <g class="accessory acc-sandals">
+      <ellipse cx="70" cy="249" rx="29" ry="11" fill="#22d3ee" />
+      <ellipse cx="130" cy="249" rx="29" ry="11" fill="#22d3ee" />
+    </g>
+
+    <!-- Chân trái -->
+    <ellipse cx="72" cy="215" rx="22" ry="26" fill="#c78f5f" />
+    <ellipse cx="70" cy="240" rx="24" ry="13" fill="#a9744f" />
+
+    <!-- Chân phải -->
+    <ellipse cx="128" cy="215" rx="22" ry="26" fill="#c78f5f" />
+    <ellipse cx="130" cy="240" rx="24" ry="13" fill="#a9744f" />
+
+    <!-- ===== GIÀY: nằm trong thân gấu, xỏ vào chân, thân gấu đè lên miệng giày ===== -->
+
+    <!-- Quai dép xỏ ngón -->
+    <g class="accessory acc-sandals-strap">
+      <line x1="70" y1="247" x2="51" y2="237" stroke="#f43f5e" stroke-width="5" stroke-linecap="round" />
+      <line x1="70" y1="247" x2="89" y2="237" stroke="#f43f5e" stroke-width="5" stroke-linecap="round" />
+      <circle cx="70" cy="247" r="3.5" fill="#f43f5e" class="no-stroke" />
+      <line x1="130" y1="247" x2="111" y2="237" stroke="#f43f5e" stroke-width="5" stroke-linecap="round" />
+      <line x1="130" y1="247" x2="149" y2="237" stroke="#f43f5e" stroke-width="5" stroke-linecap="round" />
+      <circle cx="130" cy="247" r="3.5" fill="#f43f5e" class="no-stroke" />
+    </g>
+
+    <!-- Ủng đi mưa (đỏ): ống ủng rộng bằng chân -->
+    <g class="accessory acc-rainboots">
+      <path d="M48 216 H92 V236 C92 238 98 240 98 248 C98 256 90 257 70 257 C50 257 42 256 42 248 C42 240 48 238 48 236 Z" fill="#ef4444" />
+      <path d="M152 216 H108 V236 C108 238 102 240 102 248 C102 256 110 257 130 257 C150 257 158 256 158 248 C158 240 152 238 152 236 Z" fill="#ef4444" />
+      <rect x="45" y="212" width="50" height="9" rx="4.5" fill="#b91c1c" />
+      <rect x="105" y="212" width="50" height="9" rx="4.5" fill="#b91c1c" />
+      <path d="M52 232 Q52 244 56 250" class="hl" fill="none" />
+      <path d="M112 232 Q112 244 116 250" class="hl" fill="none" />
+    </g>
+
+    <!-- Ủng đi tuyết (nâu, viền lông) -->
+    <g class="accessory acc-boots">
+      <path d="M48 218 H92 V236 C92 238 98 240 98 248 C98 256 90 257 70 257 C50 257 42 256 42 248 C42 240 48 238 48 236 Z" fill="#92400e" />
+      <path d="M152 218 H108 V236 C108 238 102 240 102 248 C102 256 110 257 130 257 C150 257 158 256 158 248 C158 240 152 238 152 236 Z" fill="#92400e" />
+      <rect x="43" y="209" width="54" height="14" rx="7" fill="#f8fafc" />
+      <rect x="103" y="209" width="54" height="14" rx="7" fill="#f8fafc" />
+      <path d="M52 232 Q52 244 56 250" class="hl" fill="none" />
+      <path d="M112 232 Q112 244 116 250" class="hl" fill="none" />
+    </g>
+
+    <!-- Giày thể thao (trời dễ chịu) — một khối liền, cổ giày ôm cổ chân -->
+    <g class="accessory acc-sneakers">
+      <path d="M50 224 Q50 220 55 220 H85 Q90 220 90 224 V240 C90 242 98 244 98 251 C98 257 90 258 70 258 C50 258 42 257 42 251 C42 244 50 242 50 240 Z" fill="#f8fafc" />
+      <path d="M150 224 Q150 220 145 220 H115 Q110 220 110 224 V240 C110 242 102 244 102 251 C102 257 110 258 130 258 C150 258 158 257 158 251 C158 244 150 242 150 240 Z" fill="#f8fafc" />
+      <path d="M50 228 H90" class="seam" fill="none" />
+      <path d="M110 228 H150" class="seam" fill="none" />
+      <path d="M44 249 Q70 238 96 249 C98 256 90 258 70 258 C50 258 42 256 44 249 Z" fill="#38bdf8" />
+      <path d="M104 249 Q130 238 156 249 C158 256 150 258 130 258 C110 258 102 256 104 249 Z" fill="#38bdf8" />
+      <path d="M43 253 C43 259 50 260 70 260 C90 260 97 259 97 253 Z" fill="#94a3b8" />
+      <path d="M103 253 C103 259 110 260 130 260 C150 260 157 259 157 253 Z" fill="#94a3b8" />
+      <line x1="60" y1="234" x2="80" y2="234" stroke="#64748b" stroke-width="2" stroke-linecap="round" />
+      <line x1="60" y1="239" x2="80" y2="239" stroke="#64748b" stroke-width="2" stroke-linecap="round" />
+      <line x1="120" y1="234" x2="140" y2="234" stroke="#64748b" stroke-width="2" stroke-linecap="round" />
+      <line x1="120" y1="239" x2="140" y2="239" stroke="#64748b" stroke-width="2" stroke-linecap="round" />
+    </g>
+
+    <!-- Thân -->
+    <ellipse cx="100" cy="165" rx="58" ry="48" fill="#c78f5f" />
+
+    <!-- Quần đùi đi biển — ôm đúng hông và hai đùi, gấu quần trùm lên chân -->
+    <g class="accessory acc-shorts">
+      <path d="M47 188 Q100 201 153 188 L154 207 Q155 218 152 227 Q131 237 108 227 Q100 208 92 227 Q69 237 48 227 Q45 218 46 207 Z" fill="#14b8a6" />
+      <path d="M47 188 Q100 201 153 188 L153.5 197 Q100 210 46.5 197 Z" fill="#0f766e" />
+      <line x1="98" y1="201" x2="93" y2="215" stroke="#f8fafc" stroke-width="2" stroke-linecap="round" />
+      <line x1="102" y1="201" x2="107" y2="215" stroke="#f8fafc" stroke-width="2" stroke-linecap="round" />
+      <circle cx="62" cy="212" r="4" fill="#fef3c7" class="no-stroke" />
+      <circle cx="78" cy="222" r="3.5" fill="#fda4af" class="no-stroke" />
+      <circle cx="84" cy="207" r="3" fill="#fef3c7" class="no-stroke" />
+      <circle cx="138" cy="212" r="4" fill="#fef3c7" class="no-stroke" />
+      <circle cx="122" cy="222" r="3.5" fill="#fda4af" class="no-stroke" />
+      <circle cx="116" cy="207" r="3" fill="#fef3c7" class="no-stroke" />
+    </g>
+
+    <!-- Áo ba lỗ — dây vai đi qua vai, nách khoét ôm sát, thân áo bám mép thân gấu -->
+    <g class="accessory acc-tank">
+      <path d="M64 131 L84 131 Q88 156 100 160 Q112 156 116 131 L136 131 Q140 152 159 168 A59 49 0 0 1 141 203 Q100 213 59 203 A59 49 0 0 1 41 168 Q60 152 64 131 Z" fill="#38bdf8" />
+      <path d="M45 184 Q100 197 155 184" class="seam" fill="none" />
+      <path d="M47 174 Q100 187 153 174" class="hl" fill="none" />
+    </g>
+
+    <!-- Áo thun sọc + trái tim — một đường viền liền, tay ngắn ôm cánh tay -->
+    <g class="accessory acc-tee">
+      <rect x="72" y="138" width="56" height="16" rx="8" fill="#10b981" />
+      <path d="M72 131 Q50 133 37 145.6 A18 18 0 0 0 19 163.6 L19 172 Q19 176 24 176 H41 A61 51 0 0 0 54 198 Q100 208 146 198 A61 51 0 0 0 159 176 H176 Q181 176 181 172 L181 163.6 A18 18 0 0 0 163 145.6 Q150 133 128 131 Q100 126 72 131 Z" fill="#6ee7b7" />
+      <path d="M55 160 Q100 171 145 160" class="seam" fill="none" />
+      <path d="M52 174 Q100 185 148 174" class="seam" fill="none" />
+      <path d="M54 188 Q100 199 146 188" class="seam" fill="none" />
+      <path d="M46 148 Q55 162 55 176" class="seam" fill="none" />
+      <path d="M154 148 Q145 162 145 176" class="seam" fill="none" />
+      <path d="M100 187 C87 177 90 166 100 172 C110 166 113 177 100 187 Z" fill="#f472b6" />
+      <path d="M19 166 H55 V172 Q55 176 51 176 H24 Q19 176 19 172 Z" fill="#10b981" />
+      <path d="M145 166 H181 V172 Q181 176 176 176 H149 Q145 176 145 172 Z" fill="#10b981" />
+      <path d="M28 152 Q26 160 29 167" class="hl" fill="none" />
+      <path d="M172 152 Q174 160 171 167" class="hl" fill="none" />
+    </g>
+
+    <!-- Áo len họa tiết thoi — một đường viền liền, tay dài có bo cổ tay -->
+    <g class="accessory acc-sweater">
+      <rect x="64" y="134" width="72" height="24" rx="12" fill="#7c3aed" />
+      <path d="M72 131 Q50 133 37 145.6 A18 18 0 0 0 19 163.6 L19 205 Q19 209 24 209 H50 Q55 209 55 205 L55 200 Q100 211 145 200 L145 205 Q145 209 150 209 H176 Q181 209 181 205 L181 163.6 A18 18 0 0 0 163 145.6 Q150 133 128 131 Q100 126 72 131 Z" fill="#a78bfa" />
+      <path d="M100 156 L82 173 L100 190 L118 173 Z" class="seam" fill="none" />
+      <path d="M100 164 L90 173 L100 182 L110 173 Z" class="seam" fill="none" />
+      <path d="M46 148 Q56 172 55 198" class="seam" fill="none" />
+      <path d="M154 148 Q144 172 145 198" class="seam" fill="none" />
+      <path d="M55 192 Q100 203 145 192 L145 200 Q100 211 55 200 Z" fill="#7c3aed" />
+      <path d="M19 196 H55 V205 Q55 209 50 209 H24 Q19 209 19 205 Z" fill="#7c3aed" />
+      <path d="M145 196 H181 V205 Q181 209 176 209 H150 Q145 209 145 205 Z" fill="#7c3aed" />
+      <path d="M28 152 Q25 172 29 188" class="hl" fill="none" />
+      <path d="M172 152 Q175 172 171 188" class="hl" fill="none" />
+    </g>
+
+    <!-- Áo sơ mi hoa đi biển (trời nắng dễ chịu) — tay ngắn, cổ áo, cúc, họa tiết hoa dâm bụt -->
+    <g class="accessory acc-aloha">
+      <rect x="70" y="138" width="60" height="16" rx="8" fill="#fb7185" />
+      <path d="M72 131 Q50 133 37 145.6 A18 18 0 0 0 19 163.6 L19 174 Q19 178 24 178 H41 A61 51 0 0 0 56 200 Q100 210 144 200 A61 51 0 0 0 159 178 H176 Q181 178 181 174 L181 163.6 A18 18 0 0 0 163 145.6 Q150 133 128 131 Q100 126 72 131 Z" fill="#fda4af" />
+      <path d="M46 148 Q55 164 55 178" class="seam" fill="none" />
+      <path d="M154 148 Q145 164 145 178" class="seam" fill="none" />
+      <path d="M19 168 H55 V174 Q55 178 51 178 H24 Q19 178 19 174 Z" fill="#fb7185" />
+      <path d="M145 168 H181 V174 Q181 178 176 178 H149 Q145 178 145 174 Z" fill="#fb7185" />
+      <line x1="100" y1="152" x2="100" y2="205" stroke="#e11d48" stroke-width="2" />
+      <circle cx="100" cy="164" r="2.6" fill="#fff1f2" class="no-stroke" />
+      <circle cx="100" cy="178" r="2.6" fill="#fff1f2" class="no-stroke" />
+      <circle cx="100" cy="192" r="2.6" fill="#fff1f2" class="no-stroke" />
+      <!-- hoa dâm bụt -->
+      <g class="no-stroke">
+        <circle cx="70" cy="170" r="4" fill="#fff1f2" class="no-stroke" /><circle cx="76" cy="176" r="3.4" fill="#fff1f2" class="no-stroke" /><circle cx="64" cy="176" r="3.4" fill="#fff1f2" class="no-stroke" /><circle cx="70" cy="177" r="2" fill="#facc15" class="no-stroke" />
+        <circle cx="128" cy="186" r="4" fill="#fff1f2" class="no-stroke" /><circle cx="134" cy="192" r="3.4" fill="#fff1f2" class="no-stroke" /><circle cx="122" cy="192" r="3.4" fill="#fff1f2" class="no-stroke" /><circle cx="128" cy="193" r="2" fill="#facc15" class="no-stroke" />
+        <circle cx="122" cy="160" r="3" fill="#fff1f2" class="no-stroke" /><circle cx="127" cy="165" r="2.6" fill="#fff1f2" class="no-stroke" /><circle cx="117" cy="165" r="2.6" fill="#fff1f2" class="no-stroke" />
+        <circle cx="30" cy="158" r="3" fill="#fff1f2" class="no-stroke" /><circle cx="170" cy="158" r="3" fill="#fff1f2" class="no-stroke" />
+        <circle cx="76" cy="192" r="2.6" fill="#fff1f2" class="no-stroke" /><circle cx="86" cy="184" r="2.2" fill="#fff1f2" class="no-stroke" />
+      </g>
+      <path d="M28 152 Q26 160 29 168" class="hl" fill="none" />
+    </g>
+
+    <!-- Áo khoác — một đường viền liền: vai dốc, tay áo đồng tâm với cánh tay, gấu áo khớp mép thân -->
+    <g class="accessory acc-jacket">
+      <rect x="66" y="134" width="68" height="24" rx="12" fill="#b91c1c" />
+      <path d="M72 131 Q50 133 37 145.6 A18 18 0 0 0 19 163.6 L19 205 Q19 209 24 209 H50 Q55 209 55 205 L55 200 Q100 211 145 200 L145 205 Q145 209 150 209 H176 Q181 209 181 205 L181 163.6 A18 18 0 0 0 163 145.6 Q150 133 128 131 Q100 126 72 131 Z" fill="#ef4444" />
+      <path d="M55 168 Q100 180 145 168" class="seam" fill="none" />
+      <path d="M55 183 Q100 195 145 183" class="seam" fill="none" />
+      <path d="M46 148 Q56 172 55 198" class="seam" fill="none" />
+      <path d="M154 148 Q144 172 145 198" class="seam" fill="none" />
+      <path d="M55 192 Q100 203 145 192 L145 200 Q100 211 55 200 Z" fill="#b91c1c" />
+      <line x1="100" y1="150" x2="100" y2="206" stroke="#7f1d1d" stroke-width="2" />
+      <path d="M19 196 H55 V205 Q55 209 50 209 H24 Q19 209 19 205 Z" fill="#b91c1c" />
+      <path d="M145 196 H181 V205 Q181 209 176 209 H150 Q145 209 145 205 Z" fill="#b91c1c" />
+      <path d="M28 152 Q25 172 29 188" class="hl" fill="none" />
+      <path d="M172 152 Q175 172 171 188" class="hl" fill="none" />
+    </g>
+
+    <!-- Áo mưa — một đường viền liền: tay áo dài + vạt áo xòe nhẹ trùm hông, nằm giữa hai tay -->
+    <g class="accessory acc-raincoat">
+      <rect x="66" y="134" width="68" height="24" rx="12" fill="#f59e0b" />
+      <path d="M72 131 Q50 133 37 145.6 A18 18 0 0 0 19 163.6 L19 205 Q19 209 24 209 H45 L42 226 Q100 238 158 226 L155 209 H176 Q181 209 181 205 L181 163.6 A18 18 0 0 0 163 145.6 Q150 133 128 131 Q100 126 72 131 Z" fill="#fcd34d" />
+      <path d="M43.8 216 Q100 228 156.2 216 L158 226 Q100 238 42 226 Z" fill="#f59e0b" />
+      <path d="M46 148 Q56 172 55 198" class="seam" fill="none" />
+      <path d="M154 148 Q144 172 145 198" class="seam" fill="none" />
+      <line x1="100" y1="150" x2="100" y2="232" stroke="#b45309" stroke-width="2" />
+      <circle cx="100" cy="166" r="3.5" fill="#b45309" class="no-stroke" />
+      <circle cx="100" cy="184" r="3.5" fill="#b45309" class="no-stroke" />
+      <circle cx="100" cy="202" r="3.5" fill="#b45309" class="no-stroke" />
+      <rect x="60" y="196" width="26" height="17" rx="5" fill="#fbbf24" />
+      <rect x="114" y="196" width="26" height="17" rx="5" fill="#fbbf24" />
+      <path d="M19 196 H55 V205 Q55 209 50 209 H24 Q19 209 19 205 Z" fill="#f59e0b" />
+      <path d="M145 196 H181 V205 Q181 209 176 209 H150 Q145 209 145 205 Z" fill="#f59e0b" />
+      <path d="M28 152 Q25 172 29 188" class="hl" fill="none" />
+      <path d="M172 152 Q175 172 171 188" class="hl" fill="none" />
+    </g>
+
+              <!-- Đầu -->
+              <circle cx="100" cy="90" r="60" fill="#c78f5f" />
+
+              <!-- Mõm -->
+              <ellipse cx="100" cy="105" rx="28" ry="20" fill="#f1dcc0" />
+              <circle cx="100" cy="95" r="7" fill="#5c3b25" />
+
+              <!-- Mắt (bị ẩn khi đeo kính râm) -->
+              <circle cx="80" cy="80" r="6" fill="#3b2a1a" class="bear-eye" />
+              <circle cx="120" cy="80" r="6" fill="#3b2a1a" class="bear-eye" />
+
+              <!-- Miệng -->
+              <path d="M90 112 Q100 120 110 112" stroke="#5c3b25" stroke-width="2" fill="none" />
+            </g>
+
+            <!-- ===== Phụ kiện vẽ TRÊN đầu / trên quần áo ===== -->
+
+            <!-- Khăn quàng cổ (sương mù / lạnh) -->
+            <g class="accessory acc-scarf">
+              <path d="M46 128 Q100 172 154 128 L158 148 Q100 194 42 148 Z" fill="#fb923c" />
+              <path d="M62 146 Q100 174 138 146" class="seam" fill="none" />
+              <g>
+                <animateTransform attributeName="transform" type="rotate" values="-3 128 165;4 128 165;-3 128 165" dur="2.4s" repeatCount="indefinite" />
+                <path d="M114 166 L144 160 L150 206 Q136 212 122 208 Z" fill="#fb923c" />
+                <line x1="119" y1="184" x2="146" y2="180" stroke="#c2410c" stroke-width="3" />
+                <line x1="121" y1="194" x2="148" y2="190" stroke="#c2410c" stroke-width="3" />
+              </g>
+            </g>
+
+            <!-- Mũ trùm áo mưa: ôm quanh mặt, tai thò ra ngoài -->
+            <g class="accessory acc-hood">
+              <path fill-rule="evenodd" fill="#fcd34d" d="M33 94 A67 63 0 1 0 167 94 A67 63 0 1 0 33 94 Z M51 99 A49 46 0 1 0 149 99 A49 46 0 1 0 51 99 Z" />
+              <circle cx="55" cy="55" r="22" fill="#a9744f" />
+              <circle cx="145" cy="55" r="22" fill="#a9744f" />
+              <circle cx="55" cy="55" r="11" fill="#7a5236" />
+              <circle cx="145" cy="55" r="11" fill="#7a5236" />
+              <line x1="80" y1="152" x2="78" y2="176" stroke="#b45309" stroke-width="2" />
+              <line x1="120" y1="152" x2="122" y2="176" stroke="#b45309" stroke-width="2" />
+              <circle cx="78" cy="178" r="3" fill="#b45309" />
+              <circle cx="122" cy="178" r="3" fill="#b45309" />
+            </g>
+
+            <!-- Nắng: nón cói + kính râm -->
+            <g class="accessory acc-sunny">
+              <ellipse cx="100" cy="36" rx="32" ry="19" fill="#fbbf24" />
+              <ellipse cx="100" cy="49" rx="58" ry="10" fill="#f59e0b" />
+              <path d="M69 42 Q100 54 131 42 L132 48 Q100 60 68 48 Z" fill="#dc2626" />
+              <rect x="66" y="73" width="29" height="15" rx="7" fill="#111827" />
+              <rect x="105" y="73" width="29" height="15" rx="7" fill="#111827" />
+              <rect x="95" y="78" width="10" height="4" fill="#111827" />
+              <path d="M72 78 L79 78" class="hl" fill="none" />
+              <path d="M111 78 L118 78" class="hl" fill="none" />
+            </g>
+
+            <!-- Trời đẹp: cầm bó hoa (đung đưa nhẹ) -->
+            <g class="accessory acc-flowers">
+              <g>
+                <animateTransform attributeName="transform" type="rotate" values="-5 163 214;5 163 214;-5 163 214" dur="2.6s" repeatCount="indefinite" />
+                <line x1="163" y1="214" x2="152" y2="186" stroke="#16a34a" stroke-width="3" />
+                <line x1="163" y1="214" x2="163" y2="180" stroke="#16a34a" stroke-width="3" />
+                <line x1="163" y1="214" x2="174" y2="186" stroke="#16a34a" stroke-width="3" />
+                <path d="M153 204 L173 204 L163 226 Z" fill="#fde68a" />
+                <circle cx="152" cy="184" r="8" fill="#f472b6" />
+                <circle cx="163" cy="176" r="8" fill="#fbbf24" />
+                <circle cx="174" cy="184" r="8" fill="#a78bfa" />
+                <circle cx="152" cy="184" r="3" fill="#fef08a" class="no-stroke" />
+                <circle cx="163" cy="176" r="3" fill="#fb7185" class="no-stroke" />
+                <circle cx="174" cy="184" r="3" fill="#fef08a" class="no-stroke" />
+              </g>
+              <circle cx="163" cy="212" r="12" fill="#c78f5f" />
+            </g>
+
+            <!-- Trời nóng: cầm kem ở tay trái -->
+            <g class="accessory acc-icecream">
+              <path d="M24 198 L50 198 L37 242 Z" fill="#f59e0b" />
+              <line x1="28" y1="205" x2="43" y2="226" stroke="#b45309" stroke-width="1.5" />
+              <line x1="46" y1="205" x2="31" y2="226" stroke="#b45309" stroke-width="1.5" />
+              <circle cx="37" cy="188" r="13" fill="#f9a8d4" />
+              <circle cx="37" cy="175" r="11" fill="#fef3c7" />
+              <circle cx="37" cy="164" r="3.5" fill="#dc2626" />
+              <circle cx="37" cy="213" r="12" fill="#c78f5f" />
+              <ellipse cx="51" cy="194" rx="3" ry="5" fill="#f9a8d4" class="no-stroke">
+                <animateTransform attributeName="transform" type="translate" values="0 0;0 16" dur="2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="1;0" dur="2s" repeatCount="indefinite" />
+              </ellipse>
+            </g>
+
+            <!-- Dù to (mưa) — cầm ở tay phải -->
+            <g class="accessory acc-umbrella">
+              <line x1="163" y1="-14" x2="163" y2="212" stroke="#334155" stroke-width="4" />
+              <path d="M83 26 Q163 -62 243 26 Z" fill="#3b82f6" />
+              <path d="M163 -17 Q140 6 123 26" class="seam" fill="none" />
+              <path d="M163 -17 Q186 6 203 26" class="seam" fill="none" />
+              <circle cx="163" cy="-17" r="3" fill="#334155" class="no-stroke" />
+              <circle cx="163" cy="214" r="13" fill="#c78f5f" />
+            </g>
+
+            <!-- Tuyết bám trên đầu, tai và vai (cục tuyết có mép lượn) -->
+            <g class="accessory acc-snowcap">
+              <path d="M38 46 Q38 30 55 30 Q72 30 72 46 Q66 41 61 46 Q55 41 49 46 Q43 41 38 46 Z" fill="#dbeafe" />
+              <path d="M128 46 Q128 30 145 30 Q162 30 162 46 Q156 41 151 46 Q145 41 139 46 Q133 41 128 46 Z" fill="#dbeafe" />
+              <path d="M76 38 Q80 22 100 22 Q120 22 124 38 Q118 33 112 38 Q106 33 100 38 Q94 33 88 38 Q82 33 76 38 Z" fill="#dbeafe" />
+              <path d="M21 155 Q21 138 37 138 Q53 138 53 155 Q47 150 42 155 Q37 150 32 155 Q27 150 21 155 Z" fill="#dbeafe" />
+              <path d="M147 155 Q147 138 163 138 Q179 138 179 155 Q173 150 168 155 Q163 150 158 155 Q153 150 147 155 Z" fill="#dbeafe" />
+            </g>
+
+            <!-- Trời nóng: giọt mồ hôi chảy xuống -->
+            <g class="accessory acc-sweat">
+              <g>
+                <animateTransform attributeName="transform" type="translate" values="0 0;0 14" dur="1.8s" repeatCount="indefinite" />
+                <path d="M52 82 Q59 94 52 100 Q45 94 52 82 Z" fill="#7dd3fc" />
+              </g>
+              <g>
+                <animateTransform attributeName="transform" type="translate" values="0 0;0 14" dur="1.8s" begin="0.9s" repeatCount="indefinite" />
+                <path d="M148 82 Q155 94 148 100 Q141 94 148 82 Z" fill="#7dd3fc" />
+              </g>
+            </g>
+
+            <!-- Bão: gấu trốn trong nhà, ló mặt qua cửa sổ -->
+            <g class="accessory acc-house">
+              <rect x="140" y="62" width="20" height="40" fill="#9ca3af" />
+              <path d="M16 130 L100 52 L184 130 Z" fill="#b45309" />
+              <rect x="30" y="126" width="140" height="120" rx="4" fill="#fde68a" />
+              <rect x="120" y="182" width="34" height="64" rx="4" fill="#92400e" />
+              <circle cx="146" cy="216" r="3" fill="#fbbf24" class="no-stroke" />
+              <rect x="48" y="146" width="62" height="56" rx="8" fill="#bae6fd" />
+              <g>
+                <animateTransform attributeName="transform" type="translate" values="-1.2 0;1.2 0;-1.2 0" dur="0.22s" repeatCount="indefinite" />
+                <circle cx="67" cy="163" r="7" fill="#a9744f" />
+                <circle cx="93" cy="163" r="7" fill="#a9744f" />
+                <circle cx="80" cy="177" r="19" fill="#c78f5f" />
+                <ellipse cx="80" cy="183" rx="8" ry="6" fill="#f1dcc0" />
+                <circle cx="80" cy="180" r="2.6" fill="#5c3b25" class="no-stroke" />
+                <circle cx="73" cy="172" r="2.4" fill="#3b2a1a" class="no-stroke" />
+                <circle cx="87" cy="172" r="2.4" fill="#3b2a1a" class="no-stroke" />
+                <path d="M75 190 Q80 186 85 190" class="seam" fill="none" />
+              </g>
+              <rect x="48" y="146" width="62" height="56" rx="8" fill="#fef9c3" class="no-stroke">
+                <animate attributeName="opacity" values="0;0;0;0.85;0;0.6;0;0;0" dur="3s" repeatCount="indefinite" />
+              </rect>
+              <path d="M30 40 L14 78 L28 78 L20 112 L48 68 L32 68 L42 40 Z" fill="#fde047">
+                <animate attributeName="opacity" values="1;1;0.2;1;0.3;1" dur="1.5s" repeatCount="indefinite" />
+              </path>
+            </g>
+
+            <!-- ===== Hiệu ứng động theo thời tiết (không có viền) ===== -->
+
+            <!-- Nước nhỏ giọt từ mép dù -->
+            <g class="fx fx-drips">
+              <ellipse cx="90" cy="30" rx="2" ry="3.5" fill="#93c5fd">
+                <animateTransform attributeName="transform" type="translate" values="0 0;0 60" dur="1.1s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="1;0" dur="1.1s" repeatCount="indefinite" />
+              </ellipse>
+              <ellipse cx="163" cy="30" rx="2" ry="3.5" fill="#93c5fd">
+                <animateTransform attributeName="transform" type="translate" values="0 0;0 60" dur="1.1s" begin="0.4s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="1;0" dur="1.1s" begin="0.4s" repeatCount="indefinite" />
+              </ellipse>
+              <ellipse cx="236" cy="30" rx="2" ry="3.5" fill="#93c5fd">
+                <animateTransform attributeName="transform" type="translate" values="0 0;0 60" dur="1.1s" begin="0.8s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="1;0" dur="1.1s" begin="0.8s" repeatCount="indefinite" />
+              </ellipse>
+            </g>
+
+            <!-- Trời lạnh: hơi thở trắng -->
+            <g class="fx fx-breath">
+              <g>
+                <animateTransform attributeName="transform" type="translate" values="0 0;22 -8" dur="2.4s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0;0.9;0" dur="2.4s" repeatCount="indefinite" />
+                <ellipse cx="128" cy="122" rx="7" ry="5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+                <ellipse cx="138" cy="118" rx="9" ry="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+                <ellipse cx="150" cy="114" rx="7" ry="5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" />
+              </g>
+            </g>
+
+            <!-- Nắng: kính lấp lánh -->
+            <g class="fx fx-glint">
+              <g transform="translate(74 78)">
+                <path d="M0 -9 L2 -2 L9 0 L2 2 L0 9 L-2 2 L-9 0 L-2 -2 Z" fill="#ffffff">
+                  <animateTransform attributeName="transform" type="scale" values="0.1;1;0.1" dur="2s" repeatCount="indefinite" />
+                </path>
+              </g>
+              <g transform="translate(126 44)">
+                <path d="M0 -8 L2 -2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2 -2 Z" fill="#fffbeb">
+                  <animateTransform attributeName="transform" type="scale" values="0.1;1;0.1" dur="2s" begin="1s" repeatCount="indefinite" />
+                </path>
+              </g>
+            </g>
+
+            <!-- Trời nóng: hơi nóng bốc lên -->
+            <g class="fx fx-heat">
+              <g>
+                <animateTransform attributeName="transform" type="translate" values="0 6;0 -16" dur="2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0;0.8;0" dur="2s" repeatCount="indefinite" />
+                <path d="M-10 70 q6 -8 0 -16 t0 -16" fill="none" stroke="#fb923c" stroke-width="3" stroke-linecap="round" />
+              </g>
+              <g>
+                <animateTransform attributeName="transform" type="translate" values="0 6;0 -16" dur="2s" begin="0.7s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0;0.8;0" dur="2s" begin="0.7s" repeatCount="indefinite" />
+                <path d="M210 70 q6 -8 0 -16 t0 -16" fill="none" stroke="#fb923c" stroke-width="3" stroke-linecap="round" />
+              </g>
+            </g>
+
+            <!-- Trời đẹp: bướm bay quanh -->
+            <g class="fx fx-butterfly">
+              <g>
+                <animateMotion path="M20 60 C50 20 90 10 130 30 S200 90 170 120 S60 110 20 60" dur="9s" repeatCount="indefinite" />
+                <g>
+                  <animateTransform attributeName="transform" type="scale" values="1 1;0.3 1;1 1" dur="0.35s" repeatCount="indefinite" />
+                  <path d="M0 0 C-6 -10 -16 -8 -13 0 C-16 8 -6 8 0 0 Z" fill="#f472b6" />
+                  <path d="M0 0 C6 -10 16 -8 13 0 C16 8 6 8 0 0 Z" fill="#f472b6" />
+                </g>
+                <rect x="-1" y="-4" width="2" height="8" rx="1" fill="#3b2a1a" />
+              </g>
+            </g>
+
+            <!-- Sương mù: mây mù trôi ngang (nằm thấp, không che mặt gấu) -->
+            <g class="fx fx-fog">
+              <ellipse cx="100" cy="128" rx="96" ry="12" fill="#ffffff" opacity="0.5" filter="url(#softblur)">
+                <animateTransform attributeName="transform" type="translate" values="-24 0;24 0;-24 0" dur="7s" repeatCount="indefinite" />
+              </ellipse>
+              <ellipse cx="100" cy="178" rx="104" ry="14" fill="#ffffff" opacity="0.5" filter="url(#softblur)">
+                <animateTransform attributeName="transform" type="translate" values="24 0;-24 0;24 0" dur="9s" repeatCount="indefinite" />
+              </ellipse>
+              <ellipse cx="100" cy="232" rx="96" ry="12" fill="#ffffff" opacity="0.55" filter="url(#softblur)">
+                <animateTransform attributeName="transform" type="translate" values="-20 0;20 0;-20 0" dur="8s" repeatCount="indefinite" />
+              </ellipse>
+            </g>
+
+            <!-- Gió mạnh: những vệt gió thổi ngang -->
+            <g class="fx fx-wind">
+              <g>
+                <animateTransform attributeName="transform" type="translate" values="-30 0;40 0" dur="1.2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0;0.8;0" dur="1.2s" repeatCount="indefinite" />
+                <path d="M-20 100 h50 q8 0 8 -7" fill="none" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" />
+              </g>
+              <g>
+                <animateTransform attributeName="transform" type="translate" values="-30 0;40 0" dur="1.2s" begin="0.4s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0;0.8;0" dur="1.2s" begin="0.4s" repeatCount="indefinite" />
+                <path d="M-20 150 h60 q9 0 9 8" fill="none" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" />
+              </g>
+              <g>
+                <animateTransform attributeName="transform" type="translate" values="-30 0;40 0" dur="1.2s" begin="0.8s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0;0.8;0" dur="1.2s" begin="0.8s" repeatCount="indefinite" />
+                <path d="M-20 200 h44 q8 0 8 -7" fill="none" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" />
+              </g>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- ===== CỘT PHẢI: kết quả thời tiết ===== -->
+      <div class="right-panel">
+        <section id="weather-result" hidden>
+          <p id="city-name"></p>
+          <p id="local-time"></p>
+
+          <div class="current-weather">
+            <img id="weather-icon" src="" alt="" />
+            <div>
+              <p id="temperature"></p>
+              <p id="condition"></p>
+              <p id="humidity"></p>
+              <p id="feels-like"></p>
+            </div>
+          </div>
+
+          <p id="last-updated"></p>
+
+          <p class="section-title">Next 24 Hours <span class="est-note">(temps estimated between real 3-hour readings)</span></p>
+          <div class="hourly-grid" id="hourly-grid"></div>
+
+          <p class="section-title">5-Day Forecast</p>
+          <div class="forecast-grid" id="forecast-grid"></div>
+        </section>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
