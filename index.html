@@ -22,13 +22,16 @@
         <h1>Weather App</h1>
 
         <form id="search-form">
-          <input
-            type="text"
-            id="city-input"
-            placeholder="Enter a city name..."
-            autocomplete="off"
-          />
-          <button type="submit">Search</button>
+          <div class="search-wrap">
+              <input
+                type="text"
+                id="city-input"
+                placeholder="Enter a city name..."
+                autocomplete="off"
+              />
+            <ul class="suggestions" id="suggestions" hidden></ul>
+          </div>
+            <button type="submit">Search</button>
         </form>
 
         <button type="button" id="location-btn">📍 Use my location</button>
@@ -516,7 +519,11 @@
 
           <p id="last-updated"></p>
 
-          <p class="section-title">Next 24 Hours <span class="est-note">(temps estimated between real 3-hour readings)</span></p>
+          <p class="section-title">
+            <span id="hourly-title-text">Next 24 Hours</span>
+            <span class="est-note">(temps estimated between real 3-hour readings)</span>
+            <button type="button" id="back-to-now-btn" class="back-link" hidden>Back to Next 24h</button>
+          </p>
           <div class="hourly-grid" id="hourly-grid"></div>
 
           <p class="section-title">5-Day Forecast</p>

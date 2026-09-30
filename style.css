@@ -61,7 +61,7 @@ body.weather-mist { background: linear-gradient(135deg, #cbd5e1, #94a3b8); }
 }
 
 #city-input {
-  flex: 1;
+  width: 100%;
   min-width: 0;
   padding: 10px 12px;
   border: 1px solid #cbd5e1;
@@ -293,7 +293,16 @@ body.weather-mist { background: linear-gradient(135deg, #cbd5e1, #94a3b8); }
   text-align: center;
   font-size: 0.8rem;
   color: #475569;
+    cursor: pointer;
+  border-radius: 8px;
+  padding: 4px;
+  transition: background 0.15s ease;
 }
+
+.forecast-day:hover {
+  background: #f1f5f9;
+}
+
 
 .forecast-day img {
   width: 40px;
@@ -456,4 +465,131 @@ body.weather-mist { background: linear-gradient(135deg, #cbd5e1, #94a3b8); }
   font-size: 0.9rem;
   color: #64748b;
   margin: 0 0 4px;
+}
+
+/* ===== Ô input giờ nằm trong 1 wrapper để định vị dropdown gợi ý ===== */
+.search-wrap {
+  position: relative;
+  flex: 1;
+}
+
+/* Trong rule #city-input hiện có, xóa dòng "flex: 1;" và thêm "width: 100%;" thay vào */
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  margin-top: 4px;
+  list-style: none;
+  padding: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 20;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.suggestions[hidden] {
+  display: none;
+}
+
+.suggestion-item {
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+.suggestion-item:hover {
+  background: #eff6ff;
+}
+
+/* ===== Ngày trong 5-Day Forecast giờ bấm được ===== */
+.forecast-day {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 4px;
+  transition: background 0.15s ease;
+}
+
+.forecast-day:hover {
+  background: #f1f5f9;
+}
+
+.back-link {
+  margin-left: 6px;
+  font-size: 0.72rem;
+  color: #2563eb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.no-data {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  padding: 8px 0;
+}
+
+
+.search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  margin: 4px 0 0;
+  list-style: none;
+  padding: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 20;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.suggestions[hidden] {
+  display: none;
+}
+
+.suggestion-item {
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+.suggestion-item:hover {
+  background: #eff6ff;
+}
+
+.back-link {
+  margin-left: 6px;
+  font-size: 0.72rem;
+  color: #2563eb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.no-data {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  padding: 8px 0;
 }

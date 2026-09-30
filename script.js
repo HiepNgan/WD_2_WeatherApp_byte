@@ -15,6 +15,7 @@ const localTimeEl = document.getElementById("local-time");
 const card = document.querySelector(".card");
 const bear = document.getElementById("bear");
 
+
 const cityNameEl = document.getElementById("city-name");
 const weatherIconEl = document.getElementById("weather-icon");
 const temperatureEl = document.getElementById("temperature");
@@ -22,6 +23,13 @@ const feelsLikeEl = document.getElementById("feels-like");
 const conditionEl = document.getElementById("condition");
 const humidityEl = document.getElementById("humidity");
 const lastUpdatedEl = document.getElementById("last-updated");
+const suggestionsEl = document.getElementById("suggestions");
+const hourlyTitleText = document.getElementById("hourly-title-text");
+const backToNowBtn = document.getElementById("back-to-now-btn");
+
+let selectedSuggestion = null; // thành phố user vừa bấm chọn từ gợi ý (nếu có)
+let lastForecastList = null;   // lưu lại dữ liệu 5 ngày của lần search gần nhất
+let lastTzOffset = 0;
 
 let cityTimezoneOffset = 0; // độ lệch múi giờ của thành phố đang xem (tính bằng giây)
 let clockIntervalId = null; // để hủy đồng hồ cũ khi search thành phố khác
@@ -49,12 +57,89 @@ card.addEventListener("mouseleave", () => {
 // ===== 1. Tìm theo tên thành phố =====
 searchForm.addEventListener("submit", (event) => {
   event.preventDefault();
+  hideSuggestions();
 
   const city = cityInput.value.trim();
   if (city === "") return;
 
-  loadWeather({ city });
+  if (selectedSuggestion && selectedSuggestion.label === city) {
+    loadWeather({ lat: selectedSuggestion.lat, lon: selectedSuggestion.lon });
+  } else {
+    loadWeather({ city });
+  }
 });
+
+// ===== Gợi ý thành phố khi đang gõ =====
+let suggestionTimer = null;
+
+cityInput.addEventListener("input", () => {
+  selectedSuggestion = null; // gõ lại thì hủy lựa chọn cũ
+  clearTimeout(suggestionTimer);
+
+  const query = cityInput.value.trim();
+  if (query.length < 2) {
+    hideSuggestions();
+    return;
+  }
+
+  // Đợi 300ms sau khi ngừng gõ mới gọi API — tránh gọi liên tục từng phím bấm
+  suggestionTimer = setTimeout(() => fetchSuggestions(query), 300);
+});
+
+// Bấm ra ngoài danh sách gợi ý thì tự đóng lại
+document.addEventListener("click", (event) => {
+  if (!suggestionsEl.contains(event.target) && event.target !== cityInput) {
+    hideSuggestions();
+  }
+});
+
+async function fetchSuggestions(query) {
+  try {
+    const res = await fetch(
+      `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${API_KEY}`
+    );
+    if (!res.ok) return;
+
+    const results = await res.json();
+    renderSuggestions(results);
+  } catch (error) {
+    hideSuggestions();
+  }
+}
+
+function renderSuggestions(results) {
+  suggestionsEl.innerHTML = "";
+
+  if (results.length === 0) {
+    hideSuggestions();
+    return;
+  }
+
+  results.forEach((place) => {
+    // Ghép "Tên, Bang, Quốc gia" — bỏ qua phần nào không có (không phải nước nào cũng có "state")
+    const label = [place.name, place.state, place.country].filter(Boolean).join(", ");
+
+    const item = document.createElement("li");
+    item.className = "suggestion-item";
+    item.textContent = label;
+
+    item.addEventListener("click", () => {
+      cityInput.value = label;
+      selectedSuggestion = { lat: place.lat, lon: place.lon, label };
+      hideSuggestions();
+      loadWeather({ lat: place.lat, lon: place.lon });
+    });
+
+    suggestionsEl.appendChild(item);
+  });
+
+  suggestionsEl.hidden = false;
+}
+
+function hideSuggestions() {
+  suggestionsEl.hidden = true;
+  suggestionsEl.innerHTML = "";
+}
 
 // ===== 2. Tìm theo vị trí hiện tại (GPS trình duyệt) =====
 locationBtn.addEventListener("click", () => {
@@ -111,6 +196,8 @@ async function loadWeather(query) {
 
     if (forecastRes.ok) {
       const forecastData = await forecastRes.json();
+      lastForecastList = forecastData.list;
+      lastTzOffset = forecastData.city.timezone;
       showHourly(forecastData);
       showForecast(forecastData);
     }
@@ -154,7 +241,11 @@ function showWeather(data) {
 // (API miễn phí chỉ cho dữ liệu mỗi 3 tiếng — không có mốc từng-giờ-một thật)
 function showHourly(data) {
   const tzOffset = data.city.timezone;
-  const hourlySeries = buildHourlySeries(data.list, 24); // 24 mốc, mỗi mốc cách nhau 1 tiếng
+  const hourlySeries = buildHourlySeries(data.list, 24);
+
+  // Mỗi lần search thành phố mới, luôn quay về chế độ "24 giờ tới" mặc định
+  hourlyTitleText.textContent = "Next 24 Hours";
+  backToNowBtn.hidden = true;
 
   hourlyGrid.innerHTML = "";
 
@@ -231,8 +322,6 @@ function pointFrom(item, targetTime) {
 
 // Hiện dự báo 5 ngày tới
 function showForecast(data) {
-  // API trả dữ liệu mỗi 3 tiếng (40 mốc cho 5 ngày) —
-  // mình chỉ lấy đúng 1 mốc mỗi ngày, gần giờ trưa (12:00) cho dễ nhìn
   const middayForecasts = data.list.filter((item) => item.dt_txt.includes("12:00:00"));
 
   forecastGrid.innerHTML = "";
@@ -241,17 +330,81 @@ function showForecast(data) {
     const dayName = new Date(item.dt_txt).toLocaleDateString("en-US", { weekday: "short" });
     const icon = item.weather[0].icon;
     const temp = Math.round(item.main.temp);
+    const dateStr = formatCityDate(item.dt, data.city.timezone);
 
     const dayCard = document.createElement("div");
     dayCard.className = "forecast-day";
+    dayCard.dataset.date = dateStr;
     dayCard.innerHTML = `
       <p>${dayName}</p>
       <img src="https://openweathermap.org/img/wn/${icon}.png" alt="${item.weather[0].description}" />
       <p>${temp}°C</p>
     `;
+
+    // Bấm vào 1 ngày -> xem chi tiết từng giờ của đúng ngày đó
+    dayCard.addEventListener("click", () => {
+      showHourlyForDate(dateStr, dayName);
+    });
+
     forecastGrid.appendChild(dayCard);
   });
 }
+
+// Đổi 1 mốc thời gian (unix) + độ lệch múi giờ ra chuỗi "yyyy-mm-dd" theo giờ địa phương
+// Dùng để so sánh "2 mốc này có cùng 1 ngày ở thành phố đó không"
+function formatCityDate(unixTimestamp, tzOffsetSeconds) {
+  const cityMs = (unixTimestamp + tzOffsetSeconds) * 1000;
+  const cityDate = new Date(cityMs);
+  const year = cityDate.getUTCFullYear();
+  const month = String(cityDate.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(cityDate.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// Hiện chi tiết từng giờ của 1 ngày cụ thể (không nhất thiết là hôm nay),
+// dùng lại đúng dữ liệu 5 ngày đã tải sẵn — không gọi thêm API nào
+function showHourlyForDate(dateStr, label) {
+  if (!lastForecastList) return;
+
+  // Nội suy toàn bộ khoảng dữ liệu đang có (tối đa 5 ngày) ra từng giờ một
+  const firstDt = lastForecastList[0].dt;
+  const lastDt = lastForecastList[lastForecastList.length - 1].dt;
+  const totalHours = Math.round((lastDt - firstDt) / 3600) + 1;
+  const fullSeries = buildHourlySeries(lastForecastList, totalHours);
+
+  // Chỉ giữ lại những giờ thuộc đúng ngày được chọn
+  const dayHours = fullSeries.filter(
+    (item) => formatCityDate(item.dt, lastTzOffset) === dateStr
+  );
+
+  hourlyGrid.innerHTML = "";
+
+  if (dayHours.length === 0) {
+    hourlyGrid.innerHTML = `<p class="no-data">No hourly data for this day.</p>`;
+    return;
+  }
+
+  dayHours.forEach((item) => {
+    const hourLabel = formatCityHour(item.dt, lastTzOffset);
+
+    const hourCard = document.createElement("div");
+    hourCard.className = "hour-card";
+    hourCard.innerHTML = `
+      <p>${hourLabel}</p>
+      <img src="https://openweathermap.org/img/wn/${item.icon}.png" alt="${item.description}" />
+      <p>${Math.round(item.temp)}°C</p>
+    `;
+    hourlyGrid.appendChild(hourCard);
+  });
+
+  hourlyTitleText.textContent = `Hourly — ${label}`;
+  backToNowBtn.hidden = false;
+}
+
+backToNowBtn.addEventListener("click", () => {
+  if (!lastForecastList) return;
+  showHourly({ list: lastForecastList, city: { timezone: lastTzOffset } });
+});
 
 // Đổi màu nền theo tình trạng thời tiết chính (Clear, Clouds, Rain...)
 function applyWeatherTheme(condition) {
