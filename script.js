@@ -1,5 +1,5 @@
 // ⚠️ Dán API key của bạn vào đây (lấy từ openweathermap.org sau khi đăng ký)
-const API_KEY = "559c79309be167badbf9f6513957b155";
+const API_KEY = "bbdaf36f7b16e9b0148b36af3abefe4d";
 
 // Lấy sẵn các phần tử HTML mình sẽ cần dùng nhiều lần
 const searchForm = document.getElementById("search-form");
